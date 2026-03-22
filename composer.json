@@ -1,0 +1,14 @@
+{
+    "name": "rabsym/scheduledconversations",
+    "description": "Schedule and automate recurring conversations in FreeScout",
+    "authors": [
+        {
+            "name": "Raimundo Alba"
+        }
+    ],
+    "autoload": {
+        "psr-4": {
+            "Modules\\ScheduledConversations\\": ""
+        }
+    }
+}

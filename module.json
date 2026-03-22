@@ -1,0 +1,35 @@
+{
+    "name": "Scheduled Conversations",
+    "alias": "scheduledconversations",
+    "description": "Schedule and automate recurring conversations. Send periodic reminders, maintenance notices, or follow-ups to customers and teams with flexible daily, weekly, monthly, or yearly frequencies.",
+    "version": "1.5.0",
+    "detailsUrl": "https://github.com/rabsym/freescout-scheduled-conversations",
+    "author": "Raimundo Alba",
+    "authorUrl": "https://github.com/rabsym",
+    "requiredAppVersion": "1.8.0",
+    "license": "MIT",
+    "keywords": [
+        "freescout",
+        "scheduled",
+        "conversations",
+        "automation",
+        "reminders",
+        "recurring",
+        "cron"
+    ],
+    "active": 0,
+    "order": 0,
+    "providers": [
+        "Modules\\ScheduledConversations\\Providers\\ScheduledConversationsServiceProvider"
+    ],
+    "img": "/modules/scheduledconversations/images/module.svg",
+    "aliases": {
+        "ScheduledConversations": "Modules\\ScheduledConversations\\Providers\\ScheduledConversationsServiceProvider"
+    },
+    "files": [
+        "start.php"
+    ],
+    "requires": [],
+    "latestVersionUrl": "https://raw.githubusercontent.com/rabsym/freescout-scheduled-conversations/main/version.txt",
+    "latestVersionZipUrl": "https://github.com/rabsym/freescout-scheduled-conversations/releases/latest/download/ScheduledConversations.zip"
+}
