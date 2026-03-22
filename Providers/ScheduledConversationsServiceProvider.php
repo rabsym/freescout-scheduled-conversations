@@ -15,7 +15,7 @@
  *
  * @package Modules\ScheduledConversations
  * @author  Raimundo Alba
- * @version 1.5.0
+ * @version 1.6.0
  */
 
 namespace Modules\ScheduledConversations\Providers;

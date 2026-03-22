@@ -174,17 +174,24 @@
 
                     {{-- Weekly --}}
                     <div id="freq_weekly" class="frequency-config" style="display:none;">
-                        <div class="form-group{{ $errors->has('weekly_day') ? ' has-error' : '' }}">
-                            <label>{{ __('Day of Week') }} <span class="text-danger">*</span></label>
-                            <select name="weekly_day" class="form-control">
-                                <option value="1" {{ old('weekly_day', 1) == 1 ? 'selected' : '' }}>{{ __('Monday') }}</option>
-                                <option value="2" {{ old('weekly_day') == 2 ? 'selected' : '' }}>{{ __('Tuesday') }}</option>
-                                <option value="3" {{ old('weekly_day') == 3 ? 'selected' : '' }}>{{ __('Wednesday') }}</option>
-                                <option value="4" {{ old('weekly_day') == 4 ? 'selected' : '' }}>{{ __('Thursday') }}</option>
-                                <option value="5" {{ old('weekly_day') == 5 ? 'selected' : '' }}>{{ __('Friday') }}</option>
-                                <option value="6" {{ old('weekly_day') == 6 ? 'selected' : '' }}>{{ __('Saturday') }}</option>
-                                <option value="0" {{ old('weekly_day') == 0 ? 'selected' : '' }}>{{ __('Sunday') }}</option>
-                            </select>
+                        {{-- Multiple day selection — at least one day must be checked --}}
+                        <div class="form-group{{ $errors->has('weekly_days') ? ' has-error' : '' }}">
+                            <label>{{ __('Days of Week') }} <span class="text-danger">*</span></label>
+                            <div class="weekly-days-checkboxes">
+                                @php $selectedDays = old('weekly_days', [1]); @endphp
+                                @foreach([1=>__('Monday'),2=>__('Tuesday'),3=>__('Wednesday'),4=>__('Thursday'),5=>__('Friday'),6=>__('Saturday'),0=>__('Sunday')] as $val => $label)
+                                <div class="checkbox-inline" style="margin-right:15px; display:inline-block;">
+                                    <label>
+                                        <input type="checkbox" name="weekly_days[]" value="{{ $val }}"
+                                            {{ in_array($val, (array)$selectedDays) ? 'checked' : '' }}>
+                                        {{ $label }}
+                                    </label>
+                                </div>
+                                @endforeach
+                            </div>
+                            @if ($errors->has('weekly_days'))
+                                <span class="help-block">{{ $errors->first('weekly_days') }}</span>
+                            @endif
                         </div>
                         <div class="form-group{{ $errors->has('weekly_time') ? ' has-error' : '' }}">
                             <label>{{ __('Time') }} <span class="text-danger">*</span></label>
@@ -262,7 +269,7 @@
                                     <select name="yearly_month" id="yearly_month" class="form-control">
                                         @for ($m = 1; $m <= 12; $m++)
                                             <option value="{{ $m }}" {{ old('yearly_month', 1) == $m ? 'selected' : '' }}>
-                                                {{ \Carbon\Carbon::create()->month($m)->format('F') }}
+                                                {{ [1=>__('January'),2=>__('February'),3=>__('March'),4=>__('April'),5=>__('May'),6=>__('June'),7=>__('July'),8=>__('August'),9=>__('September'),10=>__('October'),11=>__('November'),12=>__('December')][$m] }}
                                             </option>
                                         @endfor
                                     </select>
@@ -390,6 +397,14 @@
         // For recurring types: show the field normally.
         function updateCatchUpMode() {
             var freqType = $('#frequency_type').val();
+
+            // Weekly: at least one day must be selected
+            if (freqType === 'weekly') {
+                if ($('input[name="weekly_days[]"]:checked').length === 0) {
+                    errors.push('{{ __('Please select at least one day of the week.') }}');
+                }
+            }
+
             if (freqType === 'once') {
                 $('#catch_up_mode_group').hide();
                 $('input[name="catch_up_mode"]').prop('checked', false);
@@ -473,6 +488,14 @@
 
             // 3. Frequency fields
             var freqType = $('#frequency_type').val();
+
+            // Weekly: at least one day must be selected
+            if (freqType === 'weekly') {
+                if ($('input[name="weekly_days[]"]:checked').length === 0) {
+                    errors.push('{{ __('Please select at least one day of the week.') }}');
+                }
+            }
+
             if (freqType === 'once') {
                 var onceDate = $('#once_date').val();
                 var onceTime = $('#once_time').val();

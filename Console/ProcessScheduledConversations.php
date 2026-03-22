@@ -42,7 +42,7 @@
  *
  * @package Modules\ScheduledConversations
  * @author  Raimundo Alba
- * @version 1.5.0
+ * @version 1.6.0
  */
 
 namespace Modules\ScheduledConversations\Console;
@@ -167,6 +167,31 @@ class ProcessScheduledConversations extends Command
 
             // Calculate next run (safe — already validated above)
             $this->calculateNextRun($scheduled);
+
+            // CIRCUIT BREAKER: detect execution loops caused by unhandled errors.
+            // If this conversation has been executed 3 or more times in the last 60 minutes,
+            // auto-pause it AFTER the current execution completes — the user receives the
+            // current message but no further executions will occur until manually reactivated.
+            $recentExecutions = ScheduledConversationLog::where('scheduled_conversation_id', $scheduled->id)
+                ->where('executed_at', '>=', now()->subMinutes(60))
+                ->count();
+
+            if ($recentExecutions >= 3) {
+                $scheduled->status = ScheduledConversation::STATUS_PAUSED;
+                $scheduled->save();
+
+                ScheduledConversationLog::create([
+                    'scheduled_conversation_id' => $scheduled->id,
+                    'conversation_id'           => null,
+                    'executed_at'               => now(),
+                    'status'                    => ScheduledConversationLog::STATUS_FAILED,
+                    'recipient_email'           => null,
+                    'error_message'             => "Auto-paused: execution loop detected ({$recentExecutions} executions in the last 60 minutes). Please review the configuration and reactivate manually.",
+                    'created_at'               => now(),
+                ]);
+
+                $this->error("Auto-paused scheduled conversation #{$scheduled->id}: execution loop detected ({$recentExecutions} executions in 60 minutes)");
+            }
 
             $processedCount++;
         }
@@ -452,19 +477,44 @@ class ProcessScheduledConversations extends Command
                 return Carbon::now()->addDay()->setTimeFromTimeString($config['time']);
 
             case ScheduledConversation::FREQUENCY_WEEKLY:
-                $rawDow = $config['day_of_week'];
-                if (is_numeric($rawDow)) {
-                    if (!isset($dowNames[(int)$rawDow])) {
-                        throw new \Exception("Invalid day_of_week integer: {$rawDow}");
+                // Support both legacy day_of_week (int/string) and new days_of_week (array)
+                if (isset($config['days_of_week']) && is_array($config['days_of_week'])) {
+                    $days = array_map('intval', $config['days_of_week']);
+                    if (empty($days)) {
+                        throw new \Exception("days_of_week array is empty");
                     }
-                    $dowName = $dowNames[(int)$rawDow];
+                    foreach ($days as $d) {
+                        if (!isset($dowNames[$d])) {
+                            throw new \Exception("Invalid day_of_week integer: {$d}");
+                        }
+                    }
                 } else {
-                    $dowName = strtolower($rawDow);
-                    if (!in_array($dowName, $dowNames)) {
-                        throw new \Exception("Invalid day_of_week string: {$rawDow}");
+                    $rawDow = $config['day_of_week'];
+                    if (is_numeric($rawDow)) {
+                        if (!isset($dowNames[(int)$rawDow])) {
+                            throw new \Exception("Invalid day_of_week integer: {$rawDow}");
+                        }
+                        $days = [(int)$rawDow];
+                    } else {
+                        $dowName = strtolower($rawDow);
+                        if (!in_array($dowName, $dowNames)) {
+                            throw new \Exception("Invalid day_of_week string: {$rawDow}");
+                        }
+                        $days = [array_search($dowName, $dowNames)];
                     }
                 }
-                return Carbon::now()->next($dowName)->setTimeFromTimeString($config['time']);
+                sort($days);
+                $now = Carbon::now();
+                $currentDow = (int)$now->format('w');
+                $best = null;
+                foreach ($days as $targetDow) {
+                    $diff = ($targetDow - $currentDow + 7) % 7;
+                    $candidate = Carbon::now()->addDays($diff === 0 ? 7 : $diff)->setTimeFromTimeString($config['time']);
+                    if ($best === null || $candidate < $best) {
+                        $best = $candidate;
+                    }
+                }
+                return $best;
 
             case ScheduledConversation::FREQUENCY_MONTHLY:
                 $next = Carbon::now()->addMonth();
@@ -523,19 +573,26 @@ class ProcessScheduledConversations extends Command
                 break;
 
             case ScheduledConversation::FREQUENCY_WEEKLY:
-                // day_of_week can be stored as integer (0=Sun..6=Sat) or legacy string ('monday' etc).
-                // Normalize defensively to always get a valid English day name.
+                // Support both legacy day_of_week (int/string) and new days_of_week (array).
+                // Find the nearest next day from the selected days array.
                 $dowNames = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'];
-                $rawDow   = $config['day_of_week'];
-                if (is_numeric($rawDow)) {
-                    $dowName = $dowNames[(int)$rawDow];
+                if (isset($config['days_of_week']) && is_array($config['days_of_week'])) {
+                    $days = array_map('intval', $config['days_of_week']);
                 } else {
-                    // Legacy string value — use as-is (already a valid English day name)
-                    $dowName = strtolower($rawDow);
+                    $rawDow = $config['day_of_week'];
+                    $days = [is_numeric($rawDow) ? (int)$rawDow : array_search(strtolower($rawDow), $dowNames)];
                 }
-                $next = Carbon::now()->next($dowName);
-                $next->setTimeFromTimeString($config['time']);
-                $scheduled->next_run_at = $next;
+                sort($days);
+                $nowDow = (int)Carbon::now()->format('w');
+                $best   = null;
+                foreach ($days as $targetDow) {
+                    $diff      = ($targetDow - $nowDow + 7) % 7;
+                    $candidate = Carbon::now()->addDays($diff === 0 ? 7 : $diff)->setTimeFromTimeString($config['time']);
+                    if ($best === null || $candidate < $best) {
+                        $best = $candidate;
+                    }
+                }
+                $scheduled->next_run_at = $best;
                 break;
 
             case ScheduledConversation::FREQUENCY_MONTHLY:

@@ -12,7 +12,7 @@
  *
  * @package Modules\ScheduledConversations
  * @author  Raimundo Alba
- * @version 1.5.0
+ * @version 1.6.0
  */
 
 use Illuminate\Support\Facades\Schema;

@@ -27,7 +27,7 @@
  *
  * @package Modules\ScheduledConversations
  * @author  Raimundo Alba
- * @version 1.5.0
+ * @version 1.6.0
  */
 
 namespace Modules\ScheduledConversations\Entities;
@@ -230,6 +230,12 @@ class ScheduledConversation extends Model
             case self::FREQUENCY_DAILY:
                 return __('Daily');
             case self::FREQUENCY_WEEKLY:
+                // Show selected days if available
+                if (!empty($this->frequency_config['days_of_week'])) {
+                    $dowNames = [0=>__('Sun'),1=>__('Mon'),2=>__('Tue'),3=>__('Wed'),4=>__('Thu'),5=>__('Fri'),6=>__('Sat')];
+                    $days = array_map(function($d) use ($dowNames) { return $dowNames[(int)$d] ?? $d; }, $this->frequency_config['days_of_week']);
+                    return __('Weekly') . ' (' . implode(', ', $days) . ')';
+                }
                 return __('Weekly');
             case self::FREQUENCY_MONTHLY:
                 return __('Monthly');

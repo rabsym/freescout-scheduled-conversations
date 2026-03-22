@@ -13,6 +13,7 @@ Schedule and automate recurring messages with flexible frequencies, customizable
 - **Missed Execution Handling**: Choose between skipping or catching up missed executions
 - **Settings Page**: Configure visibility and scheduler frequency from FreeScout's admin panel
 - **Extended Editor Support**: Integrates with the Extended Editor module when available
+- **Circuit Breaker**: Auto-pauses scheduled conversations that are stuck in execution loops to prevent mailbox flooding
 - **Localization**: Available in English and Spanish
 
 ## Requirements
@@ -108,7 +109,10 @@ For issues and feature requests, please use the [GitHub Issues](https://github.c
 
 ## Changelog
 
-### v1.5.0 — 23 March 2026
+### v1.6.0 — 22 March 2026
+Weekly multi-day selection (Mon/Wed/Fri, Tue/Thu, etc.). Circuit breaker to auto-pause conversations stuck in execution loops.
+
+### v1.5.0 — 21 March 2026
 Field validation, coherence checks, and Spanish localization. Improved error handling with pre-flight config validation to prevent execution loops.
 
 ### v1.4.0 — 20 March 2026

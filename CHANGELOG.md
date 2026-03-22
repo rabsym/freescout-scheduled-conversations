@@ -4,7 +4,26 @@ All notable changes to this module are documented here.
 
 ---
 
-## v1.5.0 — 23 March 2026
+## v1.6.0 — 22 March 2026
+
+### Added
+- **Weekly multi-day selection** — the weekly frequency type now supports selecting multiple days of the week via checkboxes (e.g. Mon/Wed/Fri, Tue/Thu, weekdays only). Previously only a single day was allowed
+- **Circuit breaker** — if a scheduled conversation executes 3 or more times within 60 minutes, it is automatically paused after the current execution completes (the current message is still delivered). A "Auto-paused: execution loop detected" entry is written to the execution log. The conversation must be manually reactivated after reviewing the configuration
+- **`days_of_week` array format** in `frequency_config` for weekly type (e.g. `{"days_of_week":[1,3,5],"time":"09:00"}`)
+
+### Changed
+- **`calculateNextRun()`** for weekly — now finds the nearest next day from the selected days array
+- **`previewNextRun()`** for weekly — same logic with full validation of the days array
+- **`calculateInitialNextRun()`** in controller — same logic for initial scheduling
+- **Index frequency display** — weekly now shows selected days abbreviated: "Weekly (Mon, Wed, Fri)"
+- **`frequency_config` change detection** in `update()` — now uses `json_encode()` comparison to reliably detect changes (e.g. changing only the time without changing the day)
+
+### Compatibility
+- Existing weekly scheduled conversations stored with the legacy `day_of_week` (single integer or string) format are **fully compatible** with v1.6.0 without any data migration. The code reads both formats transparently. The format is only updated to `days_of_week` array when a conversation is edited and saved
+
+---
+
+## v1.5.0 — 21 March 2026
 
 ### Added
 - **Spanish localization** (`es.json`) covering all UI strings, validation messages, and settings labels

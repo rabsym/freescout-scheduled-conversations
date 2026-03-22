@@ -23,7 +23,7 @@
  *
  * @package Modules\ScheduledConversations
  * @author  Raimundo Alba
- * @version 1.5.0
+ * @version 1.6.0
  */
 
 namespace Modules\ScheduledConversations\Http\Controllers;
@@ -208,7 +208,7 @@ class ScheduledConversationsController extends Controller
         // Recalculate next_run_at if frequency changed or if it is in the past
         $nextRunAt = $scheduled->next_run_at;
         if ($request->frequency_type !== $scheduled->frequency_type ||
-            $frequencyConfig !== $scheduled->frequency_config) {
+            json_encode($frequencyConfig) !== json_encode($scheduled->frequency_config)) {
             $nextRunAt = $this->calculateInitialNextRun($request->frequency_type, $frequencyConfig, $request->start_date);
         }
         // Also recalculate if next_run_at is in the past (e.g. reactivating a paused conversation)
@@ -413,8 +413,18 @@ class ScheduledConversationsController extends Controller
                     break;
 
                 case 'weekly':
-                    if (!in_array((string)$request->weekly_day, ['0','1','2','3','4','5','6'])) {
-                        $errors['weekly_day'] = __('Please select a valid day of the week.');
+                    // weekly_days is now an array of day integers (0=Sun..6=Sat)
+                    $weeklyDays = $request->input('weekly_days', []);
+                    if (empty($weeklyDays)) {
+                        $errors['weekly_days'] = __('Please select at least one day of the week.');
+                    } else {
+                        $validDays = ['0','1','2','3','4','5','6'];
+                        foreach ($weeklyDays as $d) {
+                            if (!in_array((string)$d, $validDays)) {
+                                $errors['weekly_days'] = __('Please select a valid day of the week.');
+                                break;
+                            }
+                        }
                     }
                     if (empty($request->weekly_time)) {
                         $errors['weekly_time'] = __('The time is required for weekly frequency.');
@@ -524,9 +534,12 @@ class ScheduledConversationsController extends Controller
                 ];
 
             case 'weekly':
+                // Store as days_of_week array to support multiple days selection
+                $days = array_map('intval', $request->input('weekly_days', []));
+                sort($days); // normalize order
                 return [
-                    'day_of_week' => (int)$request->weekly_day,
-                    'time'        => $request->weekly_time,
+                    'days_of_week' => $days,
+                    'time'         => $request->weekly_time,
                 ];
 
             case 'monthly':
@@ -597,21 +610,32 @@ class ScheduledConversationsController extends Controller
 
             case 'weekly':
                 list($hour, $minute) = explode(':', $config['time']);
-                $targetDow  = (int)$config['day_of_week'];
-                $next       = clone $baseDate;
-                $currentDow = (int)$next->format('w');
-                $daysUntil  = ($targetDow - $currentDow + 7) % 7;
-                if ($daysUntil === 0) {
-                    $next->setTime((int)$hour, (int)$minute, 0);
-                    if ($next <= $now) {
-                        $daysUntil = 7;
+                // Support both legacy day_of_week (int) and new days_of_week (array)
+                $days = isset($config['days_of_week']) ? $config['days_of_week'] :
+                        (isset($config['day_of_week']) ? [$config['day_of_week']] : [1]);
+                $days = array_map('intval', $days);
+                sort($days);
+                $currentDow = (int)(clone $baseDate)->format('w');
+                $bestDiff = null;
+                foreach ($days as $targetDow) {
+                    $diff = ($targetDow - $currentDow + 7) % 7;
+                    $candidate = clone $baseDate;
+                    if ($diff === 0) {
+                        $candidate->setTime((int)$hour, (int)$minute, 0);
+                        if ($candidate <= $now) {
+                            $diff = 7;
+                        }
+                    }
+                    if ($diff > 0) {
+                        $candidate = clone $baseDate;
+                        $candidate->modify("+{$diff} days");
+                        $candidate->setTime((int)$hour, (int)$minute, 0);
+                    }
+                    if ($bestDiff === null || $candidate < $bestDiff) {
+                        $bestDiff = $candidate;
                     }
                 }
-                if ($daysUntil > 0) {
-                    $next->modify("+{$daysUntil} days");
-                    $next->setTime((int)$hour, (int)$minute, 0);
-                }
-                return $next;
+                return $bestDiff ?? $baseDate;
 
             case 'monthly':
                 list($hour, $minute) = explode(':', $config['time']);
