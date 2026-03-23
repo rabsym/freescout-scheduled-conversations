@@ -132,5 +132,11 @@
     "Thu": "Jue",
     "Fri": "Vie",
     "Sat": "Sáb",
-    "Sun": "Dom"
+    "Sun": "Dom",
+    "View Scheduled Conversation": "Ver Mensaje Programado",
+    "View": "Ver",
+    "Clear History": "Borrar historial",
+    "Are you sure you want to clear the execution history?": "¿Estás seguro de que quieres borrar el historial de ejecución?",
+    "Execution history cleared": "Historial de ejecución borrado",
+    "day": "día"
 }

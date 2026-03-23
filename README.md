@@ -86,28 +86,59 @@ Use these variables in subject and body:
 |----------|-------------|
 | `{customer_name}` | Customer's full name (destination type: customer only) |
 | `{date}` | Current date (Y-m-d) |
+| `{date_eu}` | Current date (DD/MM/YYYY) |
+| `{date_us}` | Current date (MM/DD/YYYY) |
 | `{time}` | Current time (H:i) |
+| `{month}` | Current month name in lowercase (e.g. `january`) |
+| `{Month}` | Current month name with initial capital (e.g. `January`) |
+| `{MONTH}` | Current month name in uppercase (e.g. `JANUARY`) |
+| `{year}` | Current year as a 4-digit number (e.g. `2026`) |
 | `{mailbox_name}` | Name of the source mailbox |
 | `{user_name}` | Full name of the user who created the scheduled conversation |
 
+All variables can be used in both the subject and body of the message.
+
 Variables with no value for the current destination type are replaced with `[not available]`.
+
+## Usage and Modifications
+
+Feel free to use and modify this module for your needs! This is open source software and you're encouraged to adapt it to your requirements.
+
+## Contributing & Support
+
+Contributions are welcome! If you have ideas for improvements or find any issues:
+
+- **Bug Reports, Questions & Feature Requests**: [GitHub Issues](https://github.com/rabsym/freescout-scheduled-conversations/issues)
+- **Pull Requests**: Code contributions are appreciated
+- **Documentation**: Help improve the docs
+
+## Support the Project
+
+If you find this module useful and would like to support its development, please feel free to sponsor this project via [GitHub Sponsors](https://github.com/sponsors/rabsym).
+
+Your support helps maintain and improve this project. Thank you! 🙏
+
+
+## Credits
+
+- **Developer**: Raimundo Alba
+- **GitHub**: [@rabsym](https://github.com/rabsym)
+- **Built for**: [FreeScout](https://freescout.net) — The free self-hosted help desk & shared mailbox
+
+⭐ If you find this module useful, please star it on GitHub!
+
 
 ## License
 
-MIT License — See LICENSE.txt
+GNU General Public License v3.0 — see the LICENSE file for details.
 
-## Author
-
-**Raimundo Alba**
-- GitHub: [@rabsym](https://github.com/rabsym)
-
-## Support
-
-For issues and feature requests, please use the [GitHub Issues](https://github.com/rabsym/freescout-scheduled-conversations/issues) page.
 
 ---
 
 ## Changelog
+
+### v1.7.0 — 23 March 2026
+Read-only view for all users. Clear History for admins. New date variables ({date_eu}, {date_us}). Variables available in subject. Enriched frequency display.
 
 ### v1.6.0 — 22 March 2026
 Weekly multi-day selection (Mon/Wed/Fri, Tue/Thu, etc.). Circuit breaker to auto-pause conversations stuck in execution loops.

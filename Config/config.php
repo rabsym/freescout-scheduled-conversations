@@ -16,7 +16,6 @@
  *
  * @package Modules\ScheduledConversations
  * @author  Raimundo Alba
- * @version 1.6.0
  */
 
 return [

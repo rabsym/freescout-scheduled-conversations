@@ -74,17 +74,26 @@
                                 </td>
                                 <td>{{ $sc->created_at->format('d/m/Y') }}</td>
                                 <td>
-                                    {{-- History button visible to all who can view --}}
+                                    {{-- View button visible to all who can view --}}
+                                    @if (\Modules\ScheduledConversations\Entities\ScheduledConversation::canView(null, $mailbox->id))
+                                        <a href="{{ route('scheduledconversations.view', $sc->id) }}" class="btn btn-xs btn-default" title="{{ __('View') }}">
+                                            <i class="glyphicon glyphicon-eye-open"></i>
+                                        </a>
+                                    @endif
+                                    {{-- Edit only for managers --}}
+                                    @if (\Modules\ScheduledConversations\Entities\ScheduledConversation::canManage(null, $mailbox->id))
+                                        <a href="{{ route('scheduledconversations.edit', $sc->id) }}" class="btn btn-xs btn-default" title="{{ __('Edit') }}">
+                                            <i class="glyphicon glyphicon-pencil"></i>
+                                        </a>
+                                    @endif
+                                    {{-- History visible to all who can view --}}
                                     @if (\Modules\ScheduledConversations\Entities\ScheduledConversation::canView(null, $mailbox->id))
                                         <a href="{{ route('scheduledconversations.history', $sc->id) }}" class="btn btn-xs btn-default" title="{{ __('History') }}">
                                             <i class="glyphicon glyphicon-list"></i>
                                         </a>
                                     @endif
-                                    {{-- Edit and Delete only for managers --}}
+                                    {{-- Delete only for managers --}}
                                     @if (\Modules\ScheduledConversations\Entities\ScheduledConversation::canManage(null, $mailbox->id))
-                                        <a href="{{ route('scheduledconversations.edit', $sc->id) }}" class="btn btn-xs btn-default" title="{{ __('Edit') }}">
-                                            <i class="glyphicon glyphicon-pencil"></i>
-                                        </a>
                                         <a href="{{ route('scheduledconversations.destroy', $sc->id) }}"
                                            class="btn btn-xs btn-danger"
                                            data-method="delete"

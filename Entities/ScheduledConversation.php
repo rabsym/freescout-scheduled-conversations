@@ -27,7 +27,6 @@
  *
  * @package Modules\ScheduledConversations
  * @author  Raimundo Alba
- * @version 1.6.0
  */
 
 namespace Modules\ScheduledConversations\Entities;
@@ -238,10 +237,30 @@ class ScheduledConversation extends Model
                 }
                 return __('Weekly');
             case self::FREQUENCY_MONTHLY:
+                // Show day of month if available
+                if (!empty($this->frequency_config['day'])) {
+                    return __('Monthly') . ' (' . __('day') . ' ' . $this->frequency_config['day'] . ')';
+                }
                 return __('Monthly');
             case self::FREQUENCY_MONTHLY_ORDINAL:
+                // Show position and weekday if available e.g. "Monthly (last Sunday)"
+                if (!empty($this->frequency_config['position']) && isset($this->frequency_config['day_of_week'])) {
+                    $positions = ['first' => __('First'), 'second' => __('Second'), 'third' => __('Third'), 'fourth' => __('Fourth'), 'last' => __('Last')];
+                    $dowNames  = [0=>__('Sunday'),1=>__('Monday'),2=>__('Tuesday'),3=>__('Wednesday'),4=>__('Thursday'),5=>__('Friday'),6=>__('Saturday')];
+                    $pos    = $positions[$this->frequency_config['position']] ?? $this->frequency_config['position'];
+                    $rawDow = $this->frequency_config['day_of_week'];
+                    $dow    = is_numeric($rawDow) ? ($dowNames[(int)$rawDow] ?? $rawDow) : ucfirst($rawDow);
+                    return __('Monthly (nth weekday)') . ' (' . $pos . ' ' . $dow . ')';
+                }
                 return __('Monthly (nth weekday)');
             case self::FREQUENCY_YEARLY:
+                // Show day and month if available e.g. "Yearly (21 March)"
+                if (!empty($this->frequency_config['day']) && !empty($this->frequency_config['month'])) {
+                    $months = [1=>__('January'),2=>__('February'),3=>__('March'),4=>__('April'),5=>__('May'),6=>__('June'),
+                               7=>__('July'),8=>__('August'),9=>__('September'),10=>__('October'),11=>__('November'),12=>__('December')];
+                    $month = $months[(int)$this->frequency_config['month']] ?? $this->frequency_config['month'];
+                    return __('Yearly') . ' (' . $this->frequency_config['day'] . ' ' . $month . ')';
+                }
                 return __('Yearly');
             default:
                 return $this->frequency_type;

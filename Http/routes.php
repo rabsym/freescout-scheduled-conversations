@@ -14,7 +14,6 @@
  *
  * @package Modules\ScheduledConversations
  * @author  Raimundo Alba
- * @version 1.6.0
  */
 
 $routeOptions = [
@@ -36,10 +35,12 @@ Route::group($routeOptions, function()
     Route::get('/mailbox/{mailbox_id}/scheduled-conversations/create', ['uses' => 'ScheduledConversationsController@create'])->name('scheduledconversations.create');
     Route::post('/mailbox/{mailbox_id}/scheduled-conversations', ['uses' => 'ScheduledConversationsController@store'])->name('scheduledconversations.store');
     
+    Route::get('/scheduled-conversations/{id}/view', ['uses' => 'ScheduledConversationsController@showView'])->name('scheduledconversations.view');
     Route::get('/scheduled-conversations/{id}/edit', ['uses' => 'ScheduledConversationsController@edit'])->name('scheduledconversations.edit');
     Route::post('/scheduled-conversations/{id}/update', ['uses' => 'ScheduledConversationsController@update'])->name('scheduledconversations.update');
     Route::get('/scheduled-conversations/{id}/history', ['uses' => 'ScheduledConversationsController@history'])->name('scheduledconversations.history');
     Route::post('/scheduled-conversations/{id}/toggle', ['uses' => 'ScheduledConversationsController@toggle'])->name('scheduledconversations.toggle');
+    Route::post('/scheduled-conversations/{id}/clear-history', ['uses' => 'ScheduledConversationsController@clearHistory'])->name('scheduledconversations.clear_history');
     Route::post('/scheduled-conversations/{id}/delete', ['uses' => 'ScheduledConversationsController@destroy'])->name('scheduledconversations.destroy');
     
     Route::post('/mailbox/scheduled-conversations/ajax', ['uses' => 'ScheduledConversationsController@ajax', 'laroute' => true])->name('scheduledconversations.ajax');

@@ -17,7 +17,7 @@
 <div class="container">
     <div class="row">
         <div class="col-xs-12">
-            
+
             <div class="panel panel-default">
                 <div class="panel-heading">
                     <h4>{{ $scheduled->subject }}</h4>
@@ -32,7 +32,7 @@
 
             @if (count($logs) > 0)
                 <div class="alert alert-info">
-                    <strong>{{ __('Success Rate') }}:</strong> 
+                    <strong>{{ __('Success Rate') }}:</strong>
                     {{ $logs->where('status', 'success')->count() }} / {{ $logs->total() }}
                     ({{ $logs->total() > 0 ? round(($logs->where('status', 'success')->count() / $logs->total()) * 100, 1) : 0 }}%)
                 </div>
@@ -87,9 +87,35 @@
                 <a href="{{ route('scheduledconversations.index', ['mailbox_id' => $scheduled->mailbox_id]) }}" class="btn btn-default">
                     <i class="glyphicon glyphicon-arrow-left"></i> {{ __('Back to List') }}
                 </a>
+                @if (auth()->user()->isAdmin())
+                    <a href="{{ route('scheduledconversations.clear_history', $scheduled->id) }}"
+                       class="btn btn-danger js-clear-history"
+                       data-confirm="{{ __('Are you sure you want to clear the execution history?') }}"
+                       style="margin-left: 10px;">
+                        <i class="glyphicon glyphicon-trash"></i> {{ __('Clear History') }}
+                    </a>
+                @endif
             </div>
 
         </div>
     </div>
 </div>
+@endsection
+
+@section('javascript')
+    @parent
+    $('a.js-clear-history').click(function(e) {
+        e.preventDefault();
+        var url = $(this).attr('href');
+        var confirmMsg = $(this).data('confirm');
+        showModalConfirm(confirmMsg, 'confirm-delete', {
+            on_show: function(modal) {
+                modal.children().find('.confirm-delete:first').click(function(e) {
+                    var form = $('<form>', { 'method': 'POST', 'action': url });
+                    var csrf = $('<input>', { 'type': 'hidden', 'name': '_token', 'value': '{{ csrf_token() }}' });
+                    form.append(csrf).appendTo('body').submit();
+                });
+            }
+        });
+    });
 @endsection

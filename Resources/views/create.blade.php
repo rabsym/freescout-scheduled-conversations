@@ -369,7 +369,7 @@
                 {{-- Available variables --}}
                 <div class="alert alert-info">
                     <strong>{{ __('Available Variables') }}:</strong>
-                    <code>{customer_name}</code>, <code>{date}</code>, <code>{time}</code>, <code>{mailbox_name}</code>, <code>{user_name}</code>
+                    <code>{customer_name}</code>, <code>{date}</code>, <code>{date_eu}</code>, <code>{date_us}</code>, <code>{time}</code>, <code>{month}</code>, <code>{Month}</code>, <code>{MONTH}</code>, <code>{year}</code>, <code>{mailbox_name}</code>, <code>{user_name}</code>
                 </div>
 
                 {{-- Submit --}}

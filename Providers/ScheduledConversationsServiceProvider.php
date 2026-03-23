@@ -15,7 +15,6 @@
  *
  * @package Modules\ScheduledConversations
  * @author  Raimundo Alba
- * @version 1.6.0
  */
 
 namespace Modules\ScheduledConversations\Providers;
@@ -209,6 +208,7 @@ class ScheduledConversationsServiceProvider extends ServiceProvider
                 'scheduledconversations.history',
                 'scheduledconversations.edit',
                 'scheduledconversations.create',
+                'scheduledconversations.view',
             ];
             if (in_array($route, $moduleRoutes)) {
                 return 'scheduledconversations.index';

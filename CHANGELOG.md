@@ -4,6 +4,26 @@ All notable changes to this module are documented here.
 
 ---
 
+## v1.7.0 — 23 March 2026
+
+### Added
+- **Read-only view** — new view mode accessible to all users with `canView()` permission. Shows the full scheduled conversation configuration in a disabled form (no editing possible). Accessible via the eye icon (👁) in the index table — visible to all users including those without manage permission
+- **Clear History** — administrators can now clear the execution log for a scheduled conversation directly from the History view. A confirmation dialog is shown before deletion
+- **New date variables & subject support** — added `{date_eu}` (DD/MM/YYYY) and `{date_us}` (MM/DD/YYYY). All variables including existing ones can now be used in the message subject as well as the body
+
+### Changed
+- **Frequency display** enriched with configuration details:
+  - Monthly → "Monthly (day 15)"
+  - Monthly (nth weekday) → "Monthly (nth weekday) (Last Sunday)"
+  - Yearly → "Yearly (21 March)"
+- **`@version` tag removed** from all PHP file headers — version is now maintained only in `version.txt` and `module.json`
+- **Index action buttons** reordered to: View, Edit, History, Delete
+- **Available variables** in create and edit forms now show `{date_eu}` and `{date_us}`
+
+
+
+---
+
 ## v1.6.0 — 22 March 2026
 
 ### Added

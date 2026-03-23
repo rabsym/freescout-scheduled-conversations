@@ -23,7 +23,6 @@
  *
  * @package Modules\ScheduledConversations
  * @author  Raimundo Alba
- * @version 1.6.0
  */
 
 namespace Modules\ScheduledConversations\Http\Controllers;
@@ -153,6 +152,24 @@ class ScheduledConversationsController extends Controller
         \Session::flash('flash_success_floating', __('Scheduled conversation created successfully'));
 
         return redirect()->route('scheduledconversations.index', ['mailbox_id' => $mailbox_id]);
+    }
+
+    /**
+     * Show read-only view of a scheduled conversation.
+     * Accessible to all users with canView() permission.
+     */
+    public function showView($id)
+    {
+        $scheduled = ScheduledConversation::findOrFail($id);
+
+        if (!ScheduledConversation::canView(null, $scheduled->mailbox_id)) {
+            \Helper::denyAccess();
+        }
+
+        $mailbox = $scheduled->mailbox;
+        $config  = $scheduled->frequency_config ?? [];
+
+        return view('scheduledconversations::view', compact('scheduled', 'mailbox', 'config'));
     }
 
     /**
@@ -300,6 +317,28 @@ class ScheduledConversationsController extends Controller
         \Session::flash('flash_success_floating', __('Scheduled conversation deleted'));
 
         return redirect()->route('scheduledconversations.index', ['mailbox_id' => $mailbox_id]);
+    }
+
+    /**
+     * Clear execution history for a scheduled conversation.
+     * Only accessible to administrators.
+     */
+    public function clearHistory($id)
+    {
+        $scheduled = ScheduledConversation::findOrFail($id);
+
+        if (!auth()->user()->isAdmin()) {
+            \Helper::denyAccess();
+        }
+
+        \Modules\ScheduledConversations\Entities\ScheduledConversationLog::where('scheduled_conversation_id', $id)->delete();
+
+        $scheduled->run_count = 0;
+        $scheduled->save();
+
+        \Session::flash('flash_success_floating', __('Execution history cleared'));
+
+        return redirect()->route('scheduledconversations.history', $id);
     }
 
     /**

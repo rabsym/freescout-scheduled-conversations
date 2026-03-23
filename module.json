@@ -2,7 +2,7 @@
     "name": "Scheduled Conversations",
     "alias": "scheduledconversations",
     "description": "Schedule and automate recurring conversations. Send periodic reminders, maintenance notices, or follow-ups to customers and teams with flexible daily, weekly, monthly, or yearly frequencies.",
-    "version": "1.6.0",
+    "version": "1.7.0",
     "detailsUrl": "https://github.com/rabsym/freescout-scheduled-conversations",
     "author": "Raimundo Alba",
     "authorUrl": "https://github.com/rabsym",

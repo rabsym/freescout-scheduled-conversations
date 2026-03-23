@@ -42,7 +42,6 @@
  *
  * @package Modules\ScheduledConversations
  * @author  Raimundo Alba
- * @version 1.6.0
  */
 
 namespace Modules\ScheduledConversations\Console;
@@ -428,6 +427,24 @@ class ProcessScheduledConversations extends Command
         return $customer;
     }
 
+
+    /**
+     * Return the month name for a given month number (1-12).
+     * Uses Laravel's translation system (__()) so it automatically respects
+     * the app locale and any language file the module provides (es.json, etc.).
+     * The keys match the English month names defined in the lang files.
+     */
+    protected function getMonthName(int $month): string
+    {
+        $months = [
+            1  => 'January',   2  => 'February',  3  => 'March',
+            4  => 'April',     5  => 'May',        6  => 'June',
+            7  => 'July',      8  => 'August',     9  => 'September',
+            10 => 'October',   11 => 'November',   12 => 'December',
+        ];
+
+        return __($months[$month] ?? '');
+    }
     /**
      * Replace template variables in subject or body text.
      *
@@ -448,9 +465,15 @@ class ProcessScheduledConversations extends Command
         $variables = [
             '{customer_name}' => $customer ? $customer->getFullName() : '[not available]',
             '{date}'          => now()->format('Y-m-d'),
+            '{date_eu}'       => now()->format('d/m/Y'),
+            '{date_us}'       => now()->format('m/d/Y'),
             '{time}'          => now()->format('H:i'),
+            '{month}'         => strtolower($this->getMonthName(now()->month)),
+            '{Month}'         => ucfirst(strtolower($this->getMonthName(now()->month))),
+            '{MONTH}'         => strtoupper($this->getMonthName(now()->month)),
+            '{year}'          => now()->format('Y'),
             '{mailbox_name}'  => $scheduled->mailbox->name,
-            '{user_name}'     => $scheduled->user->getFullName(),
+            '{user_name}'     => $scheduled->user ? $scheduled->user->getFullName() : '[not available]',
         ];
 
         return str_replace(array_keys($variables), array_values($variables), $text);
