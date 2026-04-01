@@ -13,9 +13,10 @@
  * - internal: Creates a conversation with Thread::TYPE_CUSTOMER so it appears as an
  *   incoming (white) thread. No SMTP email is sent — FreeScout does not send emails
  *   for customer-originated threads. The mailbox email is used as the customer.
- *   Notifications are fired manually via CustomerCreatedConversation event +
- *   Subscription::processEvents() because TerminateHandler middleware does not run
- *   in console context.
+ *   Built manually (replicating FetchEmails flow) so that thread 'to' and 'from'
+ *   are saved BEFORE hooks fire — ensuring Workflow conditions on those fields work.
+ *   Notifications fired via CustomerCreatedConversation event + Subscription::processEvents()
+ *   because TerminateHandler middleware does not run in console context.
  *
  * - customer: Creates an outgoing (blue) conversation via SMTP to the selected
  *   FreeScout customer. Marked as STATUS_CLOSED since no action is expected.
@@ -210,7 +211,8 @@ class ProcessScheduledConversations extends Command
      * - internal: Creates a conversation in the mailbox that appears as an incoming message
      *   (white thread, TYPE_CUSTOMER). No SMTP email is sent — FreeScout does not send emails
      *   for TYPE_CUSTOMER threads. The conversation customer is the mailbox email itself.
-     *   Notifications are fired manually since we are running in console context (not HTTP).
+     *   Built manually (replicating FetchEmails flow) so that thread 'to' and 'from' fields
+     *   are saved BEFORE hooks fire — ensuring Workflow conditions on those fields work correctly.
      *
      * - customer: Creates a conversation sent to a FreeScout customer via SMTP (TYPE_MESSAGE).
      *   Conversation is marked as CLOSED since it was sent automatically with no action needed.
@@ -232,44 +234,85 @@ class ProcessScheduledConversations extends Command
             $subject = $this->replaceVariables($scheduled->subject, $scheduled);
             $body    = $this->replaceVariables($scheduled->body, $scheduled);
 
-            // Build conversation data.
-            // - internal: STATUS_ACTIVE so agents can see and act on it
-            // - email/customer: STATUS_CLOSED since the message was sent automatically
+            // Build conversation data (used only for email/customer destination types).
+            // For internal we build the conversation manually — see below.
             $conversationData = [
                 'type'               => Conversation::TYPE_EMAIL,
-                'status'             => $isInternal ? Conversation::STATUS_ACTIVE : Conversation::STATUS_CLOSED,
+                'status'             => Conversation::STATUS_CLOSED,
                 'state'              => Conversation::STATE_PUBLISHED,
                 'subject'            => $subject,
                 'mailbox_id'         => $scheduled->mailbox_id,
                 'created_by_user_id' => $scheduled->user_id,
-                'source_via'         => $isInternal ? Conversation::PERSON_CUSTOMER : Conversation::PERSON_USER,
+                'source_via'         => Conversation::PERSON_USER,
                 'source_type'        => Conversation::SOURCE_TYPE_API,
-                'user_id'            => null, // leave unassigned
+                'user_id'            => null,
                 'imported'           => false,
             ];
 
-            // Build thread data.
+            // Build conversation and thread.
             //
-            // For INTERNAL destinations:
-            //   - Thread type is TYPE_CUSTOMER (value: 1) — this makes FreeScout render the thread
-            //     as an incoming message (white background) instead of an outgoing one (blue).
-            //   - source_via is PERSON_CUSTOMER — FreeScout does NOT send SMTP emails for
-            //     customer-originated threads, so no email leaves the server.
-            //   - created_by_customer_id is set to the mailbox customer — since no real user
-            //     "caused" this action, FreeScout will not exclude anyone from notifications.
-            //     All mailbox agents subscribed to new conversation events will be notified.
+            // For INTERNAL destinations we build the conversation and thread manually,
+            // replicating the FetchEmails flow exactly. This is necessary because
+            // Conversation::create() fires the 'conversation.created_by_customer' Eventy
+            // hook (which triggers Workflows) BEFORE we can set the thread's 'to' and 'from'
+            // fields — causing workflow conditions that check those fields to always fail.
+            // By building manually we set 'to' and 'from' on the thread BEFORE firing any
+            // hooks, so Workflows evaluates the conversation with complete data.
             //
-            // For EMAIL/CUSTOMER destinations:
-            //   - Thread type is TYPE_MESSAGE (value: 2) — outgoing message sent via SMTP.
-            //   - created_by_user_id is the user who created the scheduled conversation.
+            // For EMAIL/CUSTOMER destinations we continue using Conversation::create() which
+            // handles SMTP sending and all related logic.
             if ($isInternal) {
-                $threadData = [
-                    'type'                   => Thread::TYPE_CUSTOMER,
-                    'body'                   => $body,
-                    'source_via'             => Conversation::PERSON_CUSTOMER,
-                    'source_type'            => Conversation::SOURCE_TYPE_API,
-                    'created_by_customer_id' => $customer->id,
-                ];
+                $mailboxEmail = $scheduled->mailbox->email;
+
+                // 1. Build and save conversation
+                $conversation = new Conversation();
+                $conversation->type                   = Conversation::TYPE_EMAIL;
+                $conversation->state                  = Conversation::STATE_PUBLISHED;
+                $conversation->status                 = Conversation::STATUS_ACTIVE;
+                $conversation->subject                = $subject;
+                $conversation->mailbox_id             = $scheduled->mailbox_id;
+                $conversation->customer_id            = $customer->id;
+                $conversation->created_by_customer_id = $customer->id;
+                $conversation->source_via             = Conversation::PERSON_CUSTOMER;
+                $conversation->source_type            = Conversation::SOURCE_TYPE_API;
+                $conversation->customer_email         = $mailboxEmail;
+                $conversation->last_reply_at          = now();
+                $conversation->last_reply_from        = Conversation::PERSON_CUSTOMER;
+                $conversation->setPreview($body);
+                $conversation->updateFolder();
+                $conversation->save();
+
+                // 2. Build and save thread with 'to' and 'from' already set —
+                //    this must happen BEFORE firing any hooks so that workflow
+                //    conditions on 'to' / 'from' find the correct values.
+                $thread = new Thread();
+                $thread->conversation_id        = $conversation->id;
+                $thread->type                   = Thread::TYPE_CUSTOMER;
+                $thread->status                 = $conversation->status;
+                $thread->state                  = Thread::STATE_PUBLISHED;
+                $thread->body                   = $body;
+                $thread->from                   = $mailboxEmail;
+                $thread->setTo([$mailboxEmail]);
+                $thread->source_via             = Thread::PERSON_CUSTOMER;
+                $thread->source_type            = Thread::SOURCE_TYPE_API;
+                $thread->customer_id            = $customer->id;
+                $thread->created_by_customer_id = $customer->id;
+                $thread->first                  = true;
+                $thread->save();
+
+                // 3. Fire hooks — Workflows evaluates here, with 'to' and 'from' already in DB.
+                //    Mirrors FetchEmails.php saveCustomerThread() exactly.
+                $conversation = \Eventy::filter('conversation.created_by_customer', $conversation, $thread, $customer);
+                $conversation->save();
+                $conversation->mailbox->updateFoldersCounters();
+
+                event(new \App\Events\CustomerCreatedConversation($conversation, $thread));
+                \Eventy::action('conversation.created_by_customer', $conversation, $thread, $customer);
+
+                // In console context TerminateHandler middleware does not run, so we must
+                // call Subscription::processEvents() explicitly to dispatch notification jobs.
+                Subscription::processEvents();
+
             } else {
                 $threadData = [
                     'type'               => Thread::TYPE_MESSAGE,
@@ -282,32 +325,18 @@ class ProcessScheduledConversations extends Command
                 if ($recipientEmail) {
                     $threadData['to'] = json_encode([['email' => $recipientEmail]]);
                 }
-            }
 
-            // FreeScout's Conversation::create() returns an array:
-            // ['conversation' => Conversation, 'thread' => Thread]
-            // It does NOT return the Eloquent model directly.
-            $result = Conversation::create($conversationData, [$threadData], $customer);
+                // FreeScout's Conversation::create() returns an array:
+                // ['conversation' => Conversation, 'thread' => Thread]
+                // It does NOT return the Eloquent model directly.
+                $result = Conversation::create($conversationData, [$threadData], $customer);
 
-            if (!$result || empty($result['conversation'])) {
-                throw new \Exception('Conversation::create() returned no conversation.');
-            }
+                if (!$result || empty($result['conversation'])) {
+                    throw new \Exception('Conversation::create() returned no conversation.');
+                }
 
-            $conversation = $result['conversation'];
-            $thread       = $result['thread'];
-
-            // Fire notifications for internal conversations.
-            //
-            // Normally FreeScout fires the CustomerCreatedConversation event inside Thread::createExtended()
-            // which is called by Conversation::create(). However, that event is only fired under certain
-            // conditions. To guarantee notifications are sent, we fire it manually here.
-            //
-            // IMPORTANT: In console context (Artisan commands), the TerminateHandler middleware does NOT run,
-            // so Subscription::processEvents() is never called automatically. We must call it explicitly,
-            // just like FetchEmails.php does, to actually dispatch the notification jobs.
-            if ($isInternal) {
-                event(new \App\Events\CustomerCreatedConversation($conversation, $thread));
-                Subscription::processEvents();
+                $conversation = $result['conversation'];
+                $thread       = $result['thread'];
             }
 
             // Log successful execution

@@ -4,6 +4,30 @@ All notable changes to this module are documented here.
 
 ---
 
+## v1.8.0 — 2 April 2026 — Workflow Compatibility for Internal Conversations
+
+### Added
+- **Full Workflows module compatibility for internal conversations** — internal conversations
+  now participate in automatic Workflows exactly as real incoming emails do. Previously,
+  `Conversation::create()` was used to build the conversation and thread, which fires the
+  `conversation.created_by_customer` Eventy hook (and therefore Workflow evaluation) before
+  the thread's `to` and `from` fields could be set — causing any Workflow condition based
+  on those fields to always evaluate against NULL and never match.
+
+  The internal creation flow has been rewritten to mirror `FetchEmails.php`
+  (`saveCustomerThread`) exactly:
+  1. Build and save the `Conversation` model
+  2. Build and save the `Thread` model with `to` and `from` already populated
+  3. Fire the `conversation.created_by_customer` Eventy filter and action — Workflows
+     evaluates conditions here, with complete thread data already in the database
+  4. Fire the `CustomerCreatedConversation` Laravel event followed by
+     `Subscription::processEvents()` — agent notifications continue to work exactly as before
+
+  If the Workflows module is not installed, behaviour is identical to previous versions.
+  Email/customer destination types are unaffected by this change.
+
+---
+
 ## v1.7.0 — 23 March 2026
 
 ### Added

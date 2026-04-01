@@ -137,6 +137,9 @@ GNU General Public License v3.0 — see the LICENSE file for details.
 
 ## Changelog
 
+### v1.8.0 — 2 April 2026
+Internal conversations now fully compatible with automatic Workflows. Conditions on `to`, `from` and other thread fields now evaluate correctly. Agent notifications unaffected.
+
 ### v1.7.0 — 23 March 2026
 Read-only view for all users. Clear History for admins. New date variables ({date_eu}, {date_us}). Variables available in subject. Enriched frequency display.
 
