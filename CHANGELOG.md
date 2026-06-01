@@ -4,6 +4,23 @@ All notable changes to this module are documented here.
 
 ---
 
+## v1.9.0 — 2 June 2026 — New Frequency Types: Quarterly and Every N Weeks
+
+### Added
+- **Quarterly frequency** — executes every 3 months on a configured day and month.
+  Uses the same day/month/time configuration as the yearly type. Handles month overflow
+  (e.g. day 31 in a month with 30 days uses the last available day).
+
+- **Every N weeks frequency** — executes every N weeks (2–52) on a configured day of
+  the week and time. The day of the week and time are always preserved exactly regardless
+  of when the execution actually runs.
+
+- **Translations for 5 new languages** — added `de.json` (German), `fr.json` (French),
+  `it.json` (Italian), `nl.json` (Dutch) and `pt.json` (Portuguese) covering all module
+  strings including the new frequency types.
+
+---
+
 ## v1.8.0 — 2 April 2026 — Workflow Compatibility for Internal Conversations
 
 ### Added

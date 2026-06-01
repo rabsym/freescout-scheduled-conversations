@@ -124,6 +124,8 @@
                         <option value="monthly"         {{ old('frequency_type') === 'monthly'         ? 'selected' : '' }}>{{ __('Monthly') }}</option>
                         <option value="monthly_ordinal" {{ old('frequency_type') === 'monthly_ordinal' ? 'selected' : '' }}>{{ __('Monthly (nth weekday)') }}</option>
                         <option value="yearly"          {{ old('frequency_type') === 'yearly'          ? 'selected' : '' }}>{{ __('Yearly') }}</option>
+                        <option value="quarterly"       {{ old('frequency_type') === 'quarterly'       ? 'selected' : '' }}>{{ __('Quarterly') }}</option>
+                        <option value="every_n_weeks"   {{ old('frequency_type') === 'every_n_weeks'   ? 'selected' : '' }}>{{ __('Every N weeks') }}</option>
                     </select>
                     @if ($errors->has('frequency_type'))
                         <span class="help-block">{{ $errors->first('frequency_type') }}</span>
@@ -291,6 +293,82 @@
                                     <input type="time" name="yearly_time" class="form-control" value="{{ old('yearly_time', '09:00') }}">
                                     @if ($errors->has('yearly_time'))
                                         <span class="help-block">{{ $errors->first('yearly_time') }}</span>
+                                    @endif
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    {{-- Quarterly --}}
+                    <div id="freq_quarterly" class="frequency-config" style="display:none;">
+                        <div class="row">
+                            <div class="col-md-4">
+                                <div class="form-group{{ $errors->has('quarterly_month') ? ' has-error' : '' }}">
+                                    <label>{{ __('Month') }} <span class="text-danger">*</span></label>
+                                    <select name="quarterly_month" id="quarterly_month" class="form-control">
+                                        @for ($m = 1; $m <= 12; $m++)
+                                            <option value="{{ $m }}" {{ old('quarterly_month', 1) == $m ? 'selected' : '' }}>
+                                                {{ [1=>__('January'),2=>__('February'),3=>__('March'),4=>__('April'),5=>__('May'),6=>__('June'),7=>__('July'),8=>__('August'),9=>__('September'),10=>__('October'),11=>__('November'),12=>__('December')][$m] }}
+                                            </option>
+                                        @endfor
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="form-group{{ $errors->has('quarterly_day') ? ' has-error' : '' }}">
+                                    <label>{{ __('Day') }} <span class="text-danger">*</span></label>
+                                    <select name="quarterly_day" class="form-control" id="quarterly_day">
+                                        @for ($d = 1; $d <= 31; $d++)
+                                            <option value="{{ $d }}" {{ old('quarterly_day', 1) == $d ? 'selected' : '' }}>{{ $d }}</option>
+                                        @endfor
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="form-group{{ $errors->has('quarterly_time') ? ' has-error' : '' }}">
+                                    <label>{{ __('Time') }} <span class="text-danger">*</span></label>
+                                    <input type="time" name="quarterly_time" class="form-control" value="{{ old('quarterly_time', '09:00') }}">
+                                    @if ($errors->has('quarterly_time'))
+                                        <span class="help-block">{{ $errors->first('quarterly_time') }}</span>
+                                    @endif
+                                </div>
+                            </div>
+                        </div>
+                        <p class="help-block">{{ __('Executes every 3 months on the selected day and month.') }}</p>
+                    </div>
+
+                    {{-- Every N weeks --}}
+                    <div id="freq_every_n_weeks" class="frequency-config" style="display:none;">
+                        <div class="row">
+                            <div class="col-md-4">
+                                <div class="form-group{{ $errors->has('every_n_weeks_day') ? ' has-error' : '' }}">
+                                    <label>{{ __('Day of Week') }} <span class="text-danger">*</span></label>
+                                    <select name="every_n_weeks_day" class="form-control">
+                                        <option value="1" {{ old('every_n_weeks_day', 1) == 1 ? 'selected' : '' }}>{{ __('Monday') }}</option>
+                                        <option value="2" {{ old('every_n_weeks_day') == 2 ? 'selected' : '' }}>{{ __('Tuesday') }}</option>
+                                        <option value="3" {{ old('every_n_weeks_day') == 3 ? 'selected' : '' }}>{{ __('Wednesday') }}</option>
+                                        <option value="4" {{ old('every_n_weeks_day') == 4 ? 'selected' : '' }}>{{ __('Thursday') }}</option>
+                                        <option value="5" {{ old('every_n_weeks_day') == 5 ? 'selected' : '' }}>{{ __('Friday') }}</option>
+                                        <option value="6" {{ old('every_n_weeks_day') == 6 ? 'selected' : '' }}>{{ __('Saturday') }}</option>
+                                        <option value="0" {{ old('every_n_weeks_day') == 0 ? 'selected' : '' }}>{{ __('Sunday') }}</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="form-group{{ $errors->has('every_n_weeks_n') ? ' has-error' : '' }}">
+                                    <label>{{ __('Every N weeks') }} <span class="text-danger">*</span></label>
+                                    <input type="number" name="every_n_weeks_n" class="form-control" min="2" max="52" value="{{ old('every_n_weeks_n', 2) }}">
+                                    @if ($errors->has('every_n_weeks_n'))
+                                        <span class="help-block">{{ $errors->first('every_n_weeks_n') }}</span>
+                                    @endif
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="form-group{{ $errors->has('every_n_weeks_time') ? ' has-error' : '' }}">
+                                    <label>{{ __('Time') }} <span class="text-danger">*</span></label>
+                                    <input type="time" name="every_n_weeks_time" class="form-control" value="{{ old('every_n_weeks_time', '09:00') }}">
+                                    @if ($errors->has('every_n_weeks_time'))
+                                        <span class="help-block">{{ $errors->first('every_n_weeks_time') }}</span>
                                     @endif
                                 </div>
                             </div>
@@ -493,6 +571,25 @@
             if (freqType === 'weekly') {
                 if ($('input[name="weekly_days[]"]:checked').length === 0) {
                     errors.push('{{ __('Please select at least one day of the week.') }}');
+                }
+            }
+
+            if (freqType === 'quarterly') {
+                if ($('input[name="quarterly_time"]').val() === '') {
+                    errors.push('{{ __('The time is required for quarterly frequency.') }}');
+                }
+            }
+
+            if (freqType === 'every_n_weeks') {
+                var nVal = parseInt($('input[name="every_n_weeks_n"]').val());
+                if (isNaN(nVal) || nVal < 2 || nVal > 52) {
+                    errors.push('{{ __('Please enter a number of weeks between 2 and 52.') }}');
+                }
+                if ($('select[name="every_n_weeks_day"]').val() === '') {
+                    errors.push('{{ __('Please select a valid day of the week.') }}');
+                }
+                if ($('input[name="every_n_weeks_time"]').val() === '') {
+                    errors.push('{{ __('The time is required.') }}');
                 }
             }
 

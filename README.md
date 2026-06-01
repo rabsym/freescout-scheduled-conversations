@@ -137,6 +137,11 @@ GNU General Public License v3.0 — see the LICENSE file for details.
 
 ## Changelog
 
+### v1.9.0 — 2 June 2026
+Two new frequency types: Quarterly (every 3 months on a configured day and month) and
+Every N weeks (every N weeks on a configured day of the week). Added translations for
+German, French, Italian, Dutch and Portuguese.
+
 ### v1.8.0 — 2 April 2026
 Internal conversations now fully compatible with automatic Workflows. Conditions on `to`, `from` and other thread fields now evaluate correctly. Agent notifications unaffected.
 

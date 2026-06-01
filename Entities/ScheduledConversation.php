@@ -15,6 +15,8 @@
  * - monthly         : Every month on a specific day and time
  * - monthly_ordinal : Every month on the nth weekday (e.g. "first monday")
  * - yearly          : Every year on a specific month, day and time
+ * - quarterly       : Every 3 months on a specific day and month (same config as yearly)
+ * - every_n_weeks   : Every N weeks on a specific day of the week (n, day_of_week, time)
  *
  * DESTINATION TYPES:
  * - internal  : Internal message to the mailbox (no SMTP sent)
@@ -57,6 +59,8 @@ class ScheduledConversation extends Model
     const FREQUENCY_MONTHLY = 'monthly';
     const FREQUENCY_MONTHLY_ORDINAL = 'monthly_ordinal';
     const FREQUENCY_YEARLY = 'yearly';
+    const FREQUENCY_QUARTERLY = 'quarterly';
+    const FREQUENCY_EVERY_N_WEEKS = 'every_n_weeks';
     
     // Catch-up modes
     const CATCHUP_SKIP = 'skip';
@@ -262,6 +266,23 @@ class ScheduledConversation extends Model
                     return __('Yearly') . ' (' . $this->frequency_config['day'] . ' ' . $month . ')';
                 }
                 return __('Yearly');
+            case self::FREQUENCY_QUARTERLY:
+                // Show day and month if available e.g. "Quarterly (15 January)"
+                if (!empty($this->frequency_config['day']) && !empty($this->frequency_config['month'])) {
+                    $months = [1=>__('January'),2=>__('February'),3=>__('March'),4=>__('April'),5=>__('May'),6=>__('June'),
+                               7=>__('July'),8=>__('August'),9=>__('September'),10=>__('October'),11=>__('November'),12=>__('December')];
+                    $month = $months[(int)$this->frequency_config['month']] ?? $this->frequency_config['month'];
+                    return __('Quarterly') . ' (' . $this->frequency_config['day'] . ' ' . $month . ')';
+                }
+                return __('Quarterly');
+            case self::FREQUENCY_EVERY_N_WEEKS:
+                // Show N and day of week if available e.g. "Every 3 weeks (Mon)"
+                if (!empty($this->frequency_config['n']) && isset($this->frequency_config['day_of_week'])) {
+                    $dowNames = [0=>__('Sun'),1=>__('Mon'),2=>__('Tue'),3=>__('Wed'),4=>__('Thu'),5=>__('Fri'),6=>__('Sat')];
+                    $dow = $dowNames[(int)$this->frequency_config['day_of_week']] ?? $this->frequency_config['day_of_week'];
+                    return __('Every :n weeks', ['n' => $this->frequency_config['n']]) . ' (' . $dow . ')';
+                }
+                return __('Every N weeks');
             default:
                 return $this->frequency_type;
         }

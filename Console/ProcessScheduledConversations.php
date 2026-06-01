@@ -591,6 +591,29 @@ class ProcessScheduledConversations extends Command
 
             case ScheduledConversation::FREQUENCY_YEARLY:
                 return Carbon::now()->addYear()->month($config['month'])->day($config['day'])->setTimeFromTimeString($config['time']);
+
+            case ScheduledConversation::FREQUENCY_QUARTERLY:
+                // Find the next occurrence after now, starting from the configured day+month,
+                // advancing 3 months at a time. Uses min() to handle month overflow (e.g. day 31 in June).
+                $next = Carbon::createFromDate(Carbon::now()->year, (int)$config['month'], 1)
+                    ->day(min((int)$config['day'], Carbon::createFromDate(Carbon::now()->year, (int)$config['month'], 1)->daysInMonth))
+                    ->setTimeFromTimeString($config['time']);
+                while ($next <= Carbon::now()) {
+                    $next->addMonths(3);
+                    $next->day(min((int)$config['day'], $next->daysInMonth));
+                }
+                return $next;
+
+            case ScheduledConversation::FREQUENCY_EVERY_N_WEEKS:
+                // Find the next occurrence of the configured day_of_week, then advance in
+                // N-week multiples. setTimeFromTimeString ensures the configured time is kept.
+                $n      = max(1, (int)$config['n']);
+                $target = (int)$config['day_of_week'];
+                $nowDow = (int)Carbon::now()->format('w');
+                $diff   = ($target - $nowDow + 7) % 7;
+                return Carbon::now()
+                    ->addDays($diff === 0 ? $n * 7 : $diff + ($n - 1) * 7)
+                    ->setTimeFromTimeString($config['time']);
         }
 
         return null;
@@ -676,6 +699,26 @@ class ProcessScheduledConversations extends Command
                     ->addYear()
                     ->month($config['month'])
                     ->day($config['day'])
+                    ->setTimeFromTimeString($config['time']);
+                break;
+
+            case ScheduledConversation::FREQUENCY_QUARTERLY:
+                // Advance 3 months from now, with day overflow handling.
+                // Uses min() so e.g. day 31 in a month with 30 days executes on the last day.
+                $next = Carbon::now()->addMonths(3);
+                $day  = min((int)$config['day'], $next->daysInMonth);
+                $scheduled->next_run_at = $next->day($day)->setTimeFromTimeString($config['time']);
+                break;
+
+            case ScheduledConversation::FREQUENCY_EVERY_N_WEEKS:
+                // Advance exactly N weeks from now, landing on the configured day_of_week.
+                // setTimeFromTimeString ensures the configured time is always preserved.
+                $n      = max(1, (int)$config['n']);
+                $target = (int)$config['day_of_week'];
+                $nowDow = (int)Carbon::now()->format('w');
+                $diff   = ($target - $nowDow + 7) % 7;
+                $scheduled->next_run_at = Carbon::now()
+                    ->addDays($diff === 0 ? $n * 7 : $diff + ($n - 1) * 7)
                     ->setTimeFromTimeString($config['time']);
                 break;
         }

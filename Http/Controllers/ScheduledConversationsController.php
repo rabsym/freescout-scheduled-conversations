@@ -422,7 +422,7 @@ class ScheduledConversationsController extends Controller
         }
 
         // --- Frequency type + per-type field validation ---
-        $validFrequencies = ['once', 'daily', 'weekly', 'monthly', 'monthly_ordinal', 'yearly'];
+        $validFrequencies = ['once', 'daily', 'weekly', 'monthly', 'monthly_ordinal', 'yearly', 'quarterly', 'every_n_weeks'];
         if (!in_array($request->frequency_type, $validFrequencies)) {
             $errors['frequency_type'] = __('Please select a valid frequency.');
         } else {
@@ -512,6 +512,39 @@ class ScheduledConversationsController extends Controller
                         $errors['yearly_time'] = __('The time is required for yearly frequency.');
                     }
                     break;
+
+                case 'quarterly':
+                    $qm = (int)$request->quarterly_month;
+                    $qd = (int)$request->quarterly_day;
+                    if ($qm < 1 || $qm > 12) {
+                        $errors['quarterly_month'] = __('Please select a valid month.');
+                    }
+                    if ($qd < 1 || $qd > 31) {
+                        $errors['quarterly_day'] = __('Please select a valid day.');
+                    }
+                    if (empty($errors['quarterly_month']) && empty($errors['quarterly_day'])) {
+                        $daysInMonth = cal_days_in_month(CAL_GREGORIAN, $qm, date('Y'));
+                        if ($qd > $daysInMonth) {
+                            $errors['quarterly_day'] = __('The selected day does not exist in the chosen month.');
+                        }
+                    }
+                    if (empty($request->quarterly_time)) {
+                        $errors['quarterly_time'] = __('The time is required for quarterly frequency.');
+                    }
+                    break;
+
+                case 'every_n_weeks':
+                    $n = (int)$request->every_n_weeks_n;
+                    if ($n < 2 || $n > 52) {
+                        $errors['every_n_weeks_n'] = __('Please enter a number of weeks between 2 and 52.');
+                    }
+                    if (!in_array((string)$request->every_n_weeks_day, ['0','1','2','3','4','5','6'])) {
+                        $errors['every_n_weeks_day'] = __('Please select a valid day of the week.');
+                    }
+                    if (empty($request->every_n_weeks_time)) {
+                        $errors['every_n_weeks_time'] = __('The time is required.');
+                    }
+                    break;
             }
         }
 
@@ -599,6 +632,20 @@ class ScheduledConversationsController extends Controller
                     'day'   => (int)$request->yearly_day,
                     'month' => (int)$request->yearly_month,
                     'time'  => $request->yearly_time,
+                ];
+
+            case 'quarterly':
+                return [
+                    'day'   => (int)$request->quarterly_day,
+                    'month' => (int)$request->quarterly_month,
+                    'time'  => $request->quarterly_time,
+                ];
+
+            case 'every_n_weeks':
+                return [
+                    'n'           => (int)$request->every_n_weeks_n,
+                    'day_of_week' => (int)$request->every_n_weeks_day,
+                    'time'        => $request->every_n_weeks_time,
                 ];
         }
 
@@ -707,6 +754,38 @@ class ScheduledConversationsController extends Controller
                 if ($next <= $now) {
                     $next->modify('+1 year');
                     $next->setDate($next->format('Y'), $config['month'], $config['day']);
+                }
+                return $next;
+
+            case 'quarterly':
+                list($hour, $minute) = explode(':', $config['time']);
+                $next = clone $baseDate;
+                $next->setDate($next->format('Y'), $config['month'], $config['day']);
+                $next->setTime((int)$hour, (int)$minute, 0);
+                while ($next <= $now) {
+                    $next->modify('+3 months');
+                    $next->setDate($next->format('Y'), $next->format('m'), min($config['day'], (int)(new \DateTime($next->format('Y-m-01')))->format('t')));
+                }
+                return $next;
+
+            case 'every_n_weeks':
+                list($hour, $minute) = explode(':', $config['time']);
+                $n          = max(1, (int)$config['n']);
+                $targetDow  = (int)$config['day_of_week'];
+                $currentDow = (int)(clone $baseDate)->format('w');
+                $diff       = ($targetDow - $currentDow + 7) % 7;
+                $next       = clone $baseDate;
+                if ($diff === 0) {
+                    $next->setTime((int)$hour, (int)$minute, 0);
+                    if ($next <= $now) {
+                        $next->modify("+{$n} weeks");
+                    }
+                } else {
+                    $next->modify("+{$diff} days");
+                    $next->setTime((int)$hour, (int)$minute, 0);
+                    if ($next <= $now) {
+                        $next->modify("+{$n} weeks");
+                    }
                 }
                 return $next;
         }

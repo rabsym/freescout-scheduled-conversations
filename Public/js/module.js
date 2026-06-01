@@ -151,6 +151,28 @@
                     $daySelect.val(daysInMonth);
                 }
             });
+
+            // Adjust quarterly day options based on selected month
+            $('select[name="quarterly_month"]').on('change', function() {
+                var month = parseInt($(this).val());
+                var $daySelect = $('#quarterly_day');
+                var currentDay = parseInt($daySelect.val());
+
+                var daysInMonth = new Date(2024, month, 0).getDate();
+
+                $daySelect.find('option').each(function() {
+                    var day = parseInt($(this).val());
+                    if (day > daysInMonth) {
+                        $(this).prop('disabled', true).hide();
+                    } else {
+                        $(this).prop('disabled', false).show();
+                    }
+                });
+
+                if (currentDay > daysInMonth) {
+                    $daySelect.val(daysInMonth);
+                }
+            });
         });
     }
     

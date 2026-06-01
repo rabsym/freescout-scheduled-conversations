@@ -138,5 +138,12 @@
     "Clear History": "Borrar historial",
     "Are you sure you want to clear the execution history?": "¿Estás seguro de que quieres borrar el historial de ejecución?",
     "Execution history cleared": "Historial de ejecución borrado",
-    "day": "día"
+    "day": "día",
+    "Quarterly": "Trimestralmente",
+    "Every N weeks": "Cada N semanas",
+    "Executes every 3 months on the selected day and month.": "Se ejecuta cada 3 meses en el día y mes seleccionados.",
+    "The time is required for quarterly frequency.": "La hora es obligatoria para frecuencia trimestral.",
+    "Please enter a number of weeks between 2 and 52.": "Por favor introduce un número de semanas entre 2 y 52.",
+    "Every :n weeks": "Cada :n semanas",
+    "from": "desde"
 }
