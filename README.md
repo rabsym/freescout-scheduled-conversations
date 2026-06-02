@@ -4,7 +4,7 @@ Schedule and automate recurring messages with flexible frequencies, customizable
 
 ## Features
 
-- **6 Frequency Types**: Once, Daily, Weekly, Monthly, Monthly (nth weekday) (e.g., "first Monday"), Yearly
+- **8 Frequency Types**: Once, Daily, Weekly, Weekly (every n weeks), Monthly, Monthly (nth weekday) (e.g., "first Monday"), Quarterly, Yearly
 - **3 Destination Types**: Internal, Customers, Email addresses
 - **Execution History**: Track all scheduled conversation runs with success rates and detailed logs
 - **Dynamic Variables**: Personalize messages with `{customer_name}`, `{date}`, `{time}`, etc.
@@ -14,7 +14,7 @@ Schedule and automate recurring messages with flexible frequencies, customizable
 - **Settings Page**: Configure visibility and scheduler frequency from FreeScout's admin panel
 - **Extended Editor Support**: Integrates with the Extended Editor module when available
 - **Circuit Breaker**: Auto-pauses scheduled conversations that are stuck in execution loops to prevent mailbox flooding
-- **Localization**: Available in English and Spanish
+- **Localization**: Available in English, Spanish, French, German, Portuguese, Italian and Dutch
 
 ## Requirements
 
@@ -66,8 +66,10 @@ Visibility for all users can be toggled from the module's Settings page.
 | **Once** | Single execution at a specific date and time |
 | **Daily** | Every day at a specified time |
 | **Weekly** | Every week on a specified day and time |
+| **Weekly (every N weeks)** | Executes every N weeks (2-52) on a configured day of the week and time |
 | **Monthly** | Every month on a specified day and time |
 | **Monthly (nth weekday)** | Every month on the nth weekday (e.g. "first Monday", "last Friday") |
+| **Quarterly** | Every three months starting on a configured day and month |
 | **Yearly** | Every year on a specified date and time |
 
 ## Destination Types
@@ -137,10 +139,12 @@ GNU General Public License v3.0 — see the LICENSE file for details.
 
 ## Changelog
 
+### v1.9.1 — 2 June 2026
+Minor docs updates.
+
 ### v1.9.0 — 2 June 2026
-Two new frequency types: Quarterly (every 3 months on a configured day and month) and
-Every N weeks (every N weeks on a configured day of the week). Added translations for
-German, French, Italian, Dutch and Portuguese.
+Two new frequency types: Quarterly (every 3 months on a configured day and month) and Every N weeks (every N weeks on a configured day of the week).
+Added translations for German, French, Italian, Dutch and Portuguese.
 
 ### v1.8.0 — 2 April 2026
 Internal conversations now fully compatible with automatic Workflows. Conditions on `to`, `from` and other thread fields now evaluate correctly. Agent notifications unaffected.

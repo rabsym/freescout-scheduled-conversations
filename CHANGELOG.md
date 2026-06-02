@@ -4,6 +4,13 @@ All notable changes to this module are documented here.
 
 ---
 
+## v1.9.1 — 2 June 2026 - Minor docs updates
+
+### Changed
+- **Minor Docs updates** - to reflect the new frequency types and their behaviour**
+
+---
+
 ## v1.9.0 — 2 June 2026 — New Frequency Types: Quarterly and Every N Weeks
 
 ### Added
@@ -60,8 +67,6 @@ All notable changes to this module are documented here.
 - **`@version` tag removed** from all PHP file headers — version is now maintained only in `version.txt` and `module.json`
 - **Index action buttons** reordered to: View, Edit, History, Delete
 - **Available variables** in create and edit forms now show `{date_eu}` and `{date_us}`
-
-
 
 ---
 
@@ -149,7 +154,6 @@ All notable changes to this module are documented here.
 - **Notification support for internal conversations** — `CustomerCreatedConversation` event is fired manually after creation, followed by `Subscription::processEvents()` (required in console context since `TerminateHandler` middleware does not run in Artisan commands)
 - **Missed execution handling** — `catch_up_mode` field with two options: skip missed executions until the next cycle, or execute when possible even if delayed; threshold is 120 minutes
 - **`STATUS_CLOSED`** for email and customer destination types — conversations sent automatically are marked as closed since no agent action is expected
-
 
 ---
 
