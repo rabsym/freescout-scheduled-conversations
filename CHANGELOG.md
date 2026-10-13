@@ -4,10 +4,19 @@ All notable changes to this module are documented here.
 
 ---
 
+## v1.9.2 — 13 October 2026 - Fix embedded image truncation
+
+### Fixed
+- **Working embedded images** - Bodies with embedded base64 images larger than ~64 KB were silently
+truncated by MySQL/MariaDB (TEXT limit), causing broken images when
+reopening a scheduled conversation.
+
+---
+
 ## v1.9.1 — 2 June 2026 - Minor docs updates
 
 ### Changed
-- **Minor Docs updates** - to reflect the new frequency types and their behaviour**
+- **Minor Docs updates** - to reflect the new frequency types and their behaviour
 
 ---
 
