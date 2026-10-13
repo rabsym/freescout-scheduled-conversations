@@ -139,6 +139,9 @@ GNU General Public License v3.0 — see the LICENSE file for details.
 
 ## Changelog
 
+### v1.9.2 — 13 October 2026
+Fix: change body column to LONGTEXT to prevent image truncation
+
 ### v1.9.1 — 2 June 2026
 Minor docs updates.
 
